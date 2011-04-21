@@ -3,6 +3,8 @@ local Camera = {}
 
 local Running = false
 
+local centerX, centerY = display.contentCenterX, display.contentCenterY
+
 -- Motion ease
 -- TODO make this work...
 local Ease = 0
@@ -139,10 +141,10 @@ end
 
 Camera.setCameraBounds = function( left, top, right, bottom)
     cameraBounds = {}
-    cameraBounds.top = top + centerY
     cameraBounds.left = left + centerX
-    cameraBounds.bottom = bottom - centerY
+    cameraBounds.top = top + centerY
     cameraBounds.right = right - centerX
+    cameraBounds.bottom = bottom - centerY
 end
 
 Camera.setMotionEase = function( num )
@@ -153,10 +155,16 @@ Camera.setMotionEase = function( num )
     end
 end
 
+-- TODO Pan
 Camera.trackFinger = function()
 end
 
-Camera.moveTo = function( x, y )
+-- TODO Transition to point
+Camera.moveTo = function( x, y, scale )
+end
+
+-- TODO Pinch zoom
+Camera.zoom = function( event )
 end
 
 Camera.init = function( useDirector )
@@ -169,6 +177,7 @@ Camera.init = function( useDirector )
     end
 end
 
+-- TODO this will need to loop through and remove all objects and their fields
 Camera.kill = function()
     Runtime:removeEventListener("enterFrame", onEnterFrame)
     for key,value in pairs(Camera) do
