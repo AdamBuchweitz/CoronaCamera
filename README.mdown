@@ -1,0 +1,72 @@
+# Readme
+### For Lua and CoronaSDK
+
+__Author: Adam Buchweitz [(email)](mailto:adam@adambuchweitz.com "Email me")__
+
+Version 0.1
+
+Written and supported by Adam Buchweitz and Crawl Space Games
+
+http://crawlspacegames.com
+http://twitter.com/crawlspacegames
+
+
+For inquiries about Crawl Space, email us at
+heyyou@crawlspacegames.com
+
+For support with this class, email me at
+adam@crawlspacegames.com
+
+
+Copyright (C) 2011 Crawl Space Games - All Rights Reserved
+
+
+---
+
+
+###:: FEATURES ::
+
+The Camera is in very early stages of developement. It's something I threw
+together in a few hours because I needed a camera!
+
+---
+
+
+###:: USAGE ::
+
+<code>
+local camera = require "Camera"
+camera.init()
+
+local myObject = display.newCircle(100, 100, 25)
+camera.track(myObject)
+</code>
+
+
+###:: EXAMPLE ::
+####Add an object as a parallax background
+Valid background values are 0.1 through 0.9
+
+<code>
+local myObject = display.newCircle(100, 100, 25)
+camera.add(myObject, 0.5)
+</code>
+
+
+###:: EXAPMLE ::
+####Add an object as a parallax foreground
+Valid foreground values are any negative number.
+
+<code>
+local myObject = display.newCircle(100, 100, 25)
+camera.add(myObject, -0.5)
+</code>
+
+###:: EXAPMLE ::
+####Add an object to the background, locked to its horizontal axis
+You can also lock to vertical axis with "y"
+
+<code>
+local myObject = display.newCircle(100, 100, 25)
+camera.add(myObject, 0.5, "x")
+</code>
