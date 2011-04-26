@@ -42,23 +42,19 @@ local setPositions = function( axis, edge )
         end
     elseif axis == "x" then
         for i,v in ipairs(Stages) do
-            if edge then
-            elseif v.axisLock == "x" then
-                v.x = ( centerX - Actor.x )
+            if v.axisLock == "x" then
+                v.x = ( centerX - Actor.x ) -- keep the stage on the same verticle plane
             else
                 v.x = ( centerX - Actor.x ) * v.depth
+                --local deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) * v.depth - v.y
+                --print(abs(deltaX), i)
+                --v.x = ( v.x + deltaX )
             end
         end
     else
         for i,v in ipairs(Stages) do
-            if edge then
-                --if edge == "top" then
-                    --v.y = screenY+screenHeight
-                --else
-                    --v.y = screen.y
-                --end
-            elseif v.axisLock == "y" then
-                v.y = ( centerY - Actor.y )
+            if v.axisLock == "y" then
+                v.y = ( centerY - Actor.y ) -- keep the stage on the same horizontal plane
             else
                 v.y = ( centerY - Actor.y ) * v.depth
             end
@@ -69,21 +65,30 @@ end
 -- Local functions
 local onEnterFrame = function( event )
     if Actor then
-        local speed = math.abs(Actor.xPrev - Actor.x)
-        Actor.xPrev = Actor.x
+        --local speed = math.abs(Actor.xPrev - Actor.x)
+        --Actor.xPrev = Actor.x
         if cameraBounds then
-            local xDiff, yDiff = Actor.x - screen.x, Actor.y - screen.y
-            if yDiff > cameraBounds.top and yDiff < cameraBounds.bottom then
+
+            local left, top, right, bottom
+            right  = Actor.x - screen.x > cameraBounds.left --+ 150
+            left   = Actor.x - screen.x < cameraBounds.right -- 150
+            top    = Actor.y - screen.y < cameraBounds.bottom
+            bottom = Actor.y - screen.y > cameraBounds.top
+
+            if top and bottom then
                 setPositions("y")
-            elseif cameraBounds.top - yDiff > 300 then
-                setPositions("y", "top")
-            elseif cameraBounds.bottom - yDiff < -200 then
-                setPositions("y", "bottom")
+            elseif not top then
+                print("bottom")
+            elseif not bottom then
+                print("top")
             end
-            if xDiff > cameraBounds.left and xDiff < cameraBounds.right then
+
+            if right and left then
                 setPositions("x")
-            else
-                --setPositions("x", true)
+            elseif not left then
+                print("right")
+            elseif not right then
+                print("left")
             end
         else
             setPositions()
