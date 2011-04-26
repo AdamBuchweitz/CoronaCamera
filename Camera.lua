@@ -37,7 +37,7 @@ local setPositions = function( axis, edge )
             if v.axisLock == "x" then
             elseif v.axisLock == "y" then
             else
-                v.x, v.y = ( centerX - Actor.x ) * v.depth , ( centerX - Actor.y ) * v.depth
+                v.x, v.y = ( centerX - Actor.x ) * v.depth , ( centerY - Actor.y ) * v.depth
             end
         end
     elseif axis == "x" then
