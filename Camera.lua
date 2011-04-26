@@ -4,49 +4,61 @@ local Camera = {}
 local Running = false
 
 local centerX, centerY = display.contentCenterX, display.contentCenterY
-
--- Motion ease
--- TODO make this work...
-local Ease = 0
+local screenX, screenY = display.screenOriginX, display.screenOriginY
 
 -- Actor to track
 local Actor
-local halfHeight, halfWidth
 
--- Camera stage
+-- Main Camera stage
 local Stage = display.newGroup()
 Stage.depth = 1
 
+-- Array of stages
 local Stages = {}
 Stages[1] = Stage
 
+-- Holder for all the stages
 local StageHolder = display.newGroup()
 StageHolder:insert(Stage)
 
--- Screen
-local screen = display.newRect( 0, 0, screenWidth, screenHeight)
+-- Screen for keeping positions
+local screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
 screen.isVisible = false
 Stage:insert(screen)
 
--- Boundaries
+-- Camera boundaries
 local cameraBounds
 
-local setPositions = function( axis, edge )
+local abs = math.abs
+local ipairs = ipairs
+local xBuffer, yBuffer = false, false
+
+-- Motion ease
+-- TODO make this work...
+local Easing = 1
+
+
+local setPositions = function( axis, ease )
     if axis ~= "x" and axis ~= "y" then
         for i,v in ipairs(Stages) do
+            local deltaX, deltaY
             if v.axisLock == "x" then
+                deltaX, deltaY = ( centerX - Actor.x ) - v.x, ( centerY - Actor.y ) * v.depth - v.y
             elseif v.axisLock == "y" then
+                deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) - v.y
             else
-                v.x, v.y = ( centerX - Actor.x ) * v.depth , ( centerY - Actor.y ) * v.depth
+                deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) * v.depth - v.y
             end
+            v.x, v.y = v.x + deltaX / Easing, v.y + deltaY / Easing
         end
     elseif axis == "x" then
         for i,v in ipairs(Stages) do
+            local deltaX = ( centerX - Actor.x ) * v.depth - v.x
             if v.axisLock == "x" then
-                v.x = ( centerX - Actor.x ) -- keep the stage on the same verticle plane
+                v.x = ( centerX - Actor.x ) / (ease or 1) -- keep the stage on the same verticle plane
             else
-                v.x = ( centerX - Actor.x ) * v.depth
-                --local deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) * v.depth - v.y
+                --v.x = ( centerX - Actor.x ) * v.depth / (ease or 1)
+                v.x = v.x + deltaX / (ease or 1)
                 --print(abs(deltaX), i)
                 --v.x = ( v.x + deltaX )
             end
@@ -70,25 +82,29 @@ local onEnterFrame = function( event )
         if cameraBounds then
 
             local left, top, right, bottom
-            right  = Actor.x - screen.x > cameraBounds.left --+ 150
-            left   = Actor.x - screen.x < cameraBounds.right -- 150
+            right  = Actor.x - screen.x > cameraBounds.left + 100
+            left   = Actor.x - screen.x < cameraBounds.right - 100
             top    = Actor.y - screen.y < cameraBounds.bottom
             bottom = Actor.y - screen.y > cameraBounds.top
 
             if top and bottom then
+                yBuffer = false
                 setPositions("y")
-            elseif not top then
-                print("bottom")
-            elseif not bottom then
-                print("top")
+            elseif not top then -- bottom buffer
+                yBuffer = true
+            elseif not bottom then -- top buffer
+                yBuffer = true
             end
 
             if right and left then
+                xBuffer = false
                 setPositions("x")
-            elseif not left then
-                print("right")
-            elseif not right then
-                print("left")
+            elseif not left then -- right buffer
+                xBuffer = true
+                --setPositions("x", 10)
+            elseif not right then -- left buffer
+                xBuffer = true
+                --setPositions("x", 10)
             end
         else
             setPositions()
@@ -154,7 +170,7 @@ end
 
 Camera.setMotionEase = function( num )
     if type(num) == "number" then
-        Ease = num
+        Easing = num
     else
         error("Expecting a number, recieved a "..type(num))
     end
