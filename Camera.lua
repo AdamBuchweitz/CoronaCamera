@@ -29,16 +29,15 @@ Stage:insert(screen)
 -- Camera boundaries
 local cameraBounds
 
+-- Motion ease
+local Easing = 5
+
 local abs = math.abs
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
 
--- Motion ease
--- TODO make this work...
-local Easing = 1
 
-
-local setPositions = function( axis, ease )
+local setPositions = function( axis, buffer, speed )
     if axis ~= "x" and axis ~= "y" then
         for i,v in ipairs(Stages) do
             local deltaX, deltaY
@@ -53,18 +52,34 @@ local setPositions = function( axis, ease )
         end
     elseif axis == "x" then
         for i,v in ipairs(Stages) do
-            local deltaX = ( centerX - Actor.x ) * v.depth - v.x
-            if v.axisLock == "x" then
-                v.x = ( centerX - Actor.x ) / (ease or 1) -- keep the stage on the same verticle plane
+            local deltaX
+            if buffer then
+                deltaX = ( centerX - Actor.x )
+                --print( screen.x - v.x)
+                if buffer == "left" then
+                    --v.x = v.x + deltaX
+                    v.x = v.x + ( screen.x - v.x ) / Easing
+                else
+                    v.x = screen.x + screen.width - v.width + 20
+                end
             else
-                --v.x = ( centerX - Actor.x ) * v.depth / (ease or 1)
-                v.x = v.x + deltaX / (ease or 1)
-                --print(abs(deltaX), i)
-                --v.x = ( v.x + deltaX )
+                if v.axisLock == "x" then
+                    deltaX = ( centerX - Actor.x ) - v.x -- keep the stage on the same horizontal plane
+                else
+                    deltaX = ( centerX - Actor.x ) * v.depth - v.x
+                end
+                v.x = v.x + deltaX / Easing * ((speed or 10) / 10)
             end
         end
     else
         for i,v in ipairs(Stages) do
+            local deltaX
+            if v.axisLock == "x" then
+                deltaX = ( centerX - Actor.x ) - v.x
+            else
+                deltaX = ( centerX - Actor.x ) * v.depth - v.x
+            end
+            v.x = v.x + deltaX / Easing
             if v.axisLock == "y" then
                 v.y = ( centerY - Actor.y ) -- keep the stage on the same horizontal plane
             else
@@ -75,13 +90,14 @@ local setPositions = function( axis, ease )
 end
 
 -- Local functions
+
+local left, top, right, bottom
 local onEnterFrame = function( event )
     if Actor then
-        --local speed = math.abs(Actor.xPrev - Actor.x)
-        --Actor.xPrev = Actor.x
+        local speed = math.abs(Actor.xPrev - Actor.x)
+        Actor.xPrev = Actor.x
         if cameraBounds then
 
-            local left, top, right, bottom
             right  = Actor.x - screen.x > cameraBounds.left + 100
             left   = Actor.x - screen.x < cameraBounds.right - 100
             top    = Actor.y - screen.y < cameraBounds.bottom
@@ -98,16 +114,25 @@ local onEnterFrame = function( event )
 
             if right and left then
                 xBuffer = false
-                setPositions("x")
+                setPositions("x")--, nil, speed
             elseif not left then -- right buffer
                 xBuffer = true
-                --setPositions("x", 10)
+                --setPositions("x", "right", speed)
             elseif not right then -- left buffer
                 xBuffer = true
-                --setPositions("x", 10)
+                --setPositions("x", "left", speed)
             end
         else
             setPositions()
+        end
+    end
+    if #Camera.tiles then
+        for i,v in ipairs(Camera.tiles) do
+            local gx, gy = v.one:localToContent( 0, 0 )
+            --print(gx, gy)
+            if v.parent.x < v.width then
+                print("got to parallax")
+            end
         end
     end
 end
@@ -188,6 +213,29 @@ end
 Camera.zoom = function( event )
 end
 
+Camera.tiles = {}
+Camera.tile = function(path, w, h, depth, lock)
+    local tiler = {}
+
+    tiler.one = display.newImageRect(path, w, h, "bl")
+
+    tiler.two = display.newImageRect(path, w, h, "br")
+    tiler.two.xScale = -1
+
+    tiler.position = function( self, x, y )
+        Camera.add(tiler.one, depth, lock)
+        Camera.add(tiler.two, depth, lock)
+        tiler.one.x, tiler.one.y = x, y
+        tiler.two.x, tiler.two.y = x + tiler.one.width, y
+        tiler.parent = tiler.one.parent
+        tiler.width = tiler.one.width * -2
+    end
+
+    Camera.tiles[#Camera.tiles+1] = tiler
+
+    return tiler
+end
+
 Camera.init = function( useDirector )
     if not Running then
         Running = true
@@ -208,3 +256,4 @@ Camera.kill = function()
 end
 
 return Camera
+
