@@ -21,6 +21,8 @@ Stages[1] = Stage
 local StageHolder = display.newGroup()
 StageHolder:insert(Stage)
 
+local EscapeGroup = display.newGroup()
+
 -- Screen for keeping positions
 local screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
 screen.isVisible = false
@@ -92,7 +94,7 @@ end
 -- Local functions
 
 local left, top, right, bottom
-local onEnterFrame = function( event )
+Camera.enterFrame = function( event )
     if Actor then
         local speed = math.abs(Actor.xPrev - Actor.x)
         Actor.xPrev = Actor.x
@@ -126,15 +128,15 @@ local onEnterFrame = function( event )
             setPositions()
         end
     end
-    if #Camera.tiles then
-        for i,v in ipairs(Camera.tiles) do
-            local gx, gy = v.one:localToContent( 0, 0 )
-            --print(gx, gy)
-            if v.parent.x < v.width then
-                print("got to parallax")
-            end
-        end
-    end
+    --if #Camera.tiles then
+        --for i,v in ipairs(Camera.tiles) do
+            --local gx, gy = v.one:localToContent( 0, 0 )
+            ----print(gx, gy)
+            --if v.parent.x < v.width then
+                --print("got to parallax")
+            --end
+        --end
+    --end
 end
 
 Camera.track = function( obj )
@@ -148,6 +150,7 @@ Camera.track = function( obj )
 end
 
 Camera.untrack = function()
+    Actor = nil
 end
 
 Camera.add = function( obj, depth, axisLock )
@@ -237,9 +240,10 @@ Camera.tile = function(path, w, h, depth, lock)
 end
 
 Camera.init = function( useDirector )
+    print("init camera")
     if not Running then
         Running = true
-        Runtime:addEventListener("enterFrame", onEnterFrame)
+        Runtime:addEventListener("enterFrame", Camera)
     end
     if useDirector then
         useDirector:insert(StageHolder)
@@ -248,11 +252,32 @@ end
 
 -- TODO this will need to loop through and remove all objects and their fields
 Camera.kill = function()
-    Runtime:removeEventListener("enterFrame", onEnterFrame)
-    for key,value in pairs(Camera) do
-        v = nil
+    Actor = nil
+    Runtime:removeEventListener("enterFrame", Camera)
+    local i, g = #Stages
+    while i > 0 do
+        g = table.remove(Stages)
+        for key,value in ipairs(g) do
+            --if g.numChildren then
+                --for i,v in ipairs(g) do
+                    --display.remove(v)
+                --end
+            --end
+            display.remove(value)
+        end
+        display.remove(g)
+        i = i-1
     end
-    Camera = nil
+    Stage = display.newGroup()
+    Stage.depth = 1
+
+    screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
+    screen.isVisible = false
+    Stage:insert(screen)
+
+    Stages[1] = Stage
+    EscapeGroup:insert(StageHolder)
+    Running = false
 end
 
 return Camera
