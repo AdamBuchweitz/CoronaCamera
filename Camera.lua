@@ -10,23 +10,18 @@ local screenX, screenY = display.screenOriginX, display.screenOriginY
 local Actor
 
 -- Main Camera stage
-local Stage = display.newGroup()
-Stage.depth = 1
+local Stage
 
 -- Array of stages
 local Stages = {}
-Stages[1] = Stage
 
 -- Holder for all the stages
 local StageHolder = display.newGroup()
-StageHolder:insert(Stage)
 
 local EscapeGroup = display.newGroup()
 
 -- Screen for keeping positions
-local screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
-screen.isVisible = false
-Stage:insert(screen)
+local screen
 
 -- Camera boundaries
 local cameraBounds
@@ -37,6 +32,7 @@ local Easing = 5
 local abs = math.abs
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
+local usingDirector = false
 
 
 local setPositions = function( axis, buffer, speed )
@@ -100,8 +96,8 @@ Camera.enterFrame = function( event )
         Actor.xPrev = Actor.x
         if cameraBounds then
 
-            right  = Actor.x - screen.x > cameraBounds.left + 100
-            left   = Actor.x - screen.x < cameraBounds.right - 100
+            right  = Actor.x - screen.x > cameraBounds.left --+ 100
+            left   = Actor.x - screen.x < cameraBounds.right -- 100
             top    = Actor.y - screen.y < cameraBounds.bottom
             bottom = Actor.y - screen.y > cameraBounds.top
 
@@ -239,14 +235,23 @@ Camera.tile = function(path, w, h, depth, lock)
     return tiler
 end
 
-Camera.init = function( useDirector )
-    print("init camera")
+Camera.init = function( directorGroup )
+    usingDirector = directorGroup ~= nil
     if not Running then
         Running = true
+        Stage = display.newGroup()
+        Stage.depth = 1
+        Stages[1] = Stage
+        StageHolder:insert(Stage)
+
+        screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
+        screen.isVisible = false
+        Stage:insert(screen)
+
         Runtime:addEventListener("enterFrame", Camera)
     end
-    if useDirector then
-        useDirector:insert(StageHolder)
+    if usingDirector then
+        directorGroup:insert(StageHolder)
     end
 end
 
@@ -257,25 +262,19 @@ Camera.kill = function()
     local i, g = #Stages
     while i > 0 do
         g = table.remove(Stages)
-        for key,value in ipairs(g) do
-            --if g.numChildren then
+        if usingDirector then
+            for key,value in ipairs(g) do
+                --if g.numChildren then
                 --for i,v in ipairs(g) do
-                    --display.remove(v)
+                --display.remove(v)
                 --end
-            --end
-            display.remove(value)
+                --end
+                display.remove(value)
+            end
+            display.remove(g)
         end
-        display.remove(g)
         i = i-1
     end
-    Stage = display.newGroup()
-    Stage.depth = 1
-
-    screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
-    screen.isVisible = false
-    Stage:insert(screen)
-
-    Stages[1] = Stage
     EscapeGroup:insert(StageHolder)
     Running = false
 end
