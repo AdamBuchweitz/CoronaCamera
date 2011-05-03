@@ -17,8 +17,10 @@ local Stages = {}
 
 -- Holder for all the stages
 local StageHolder = display.newGroup()
+--StageHolder:setReferencePoint(display.c)
 
 local EscapeGroup = display.newGroup()
+--EscapeGroup:setReferencePoint(display.c)
 
 -- Screen for keeping positions
 local screen
@@ -34,21 +36,34 @@ local ipairs = ipairs
 local xBuffer, yBuffer = false, false
 local usingDirector = false
 
+Camera.zoomLevel = 1
 
+local zoomDir
 local setPositions = function( axis, buffer, speed )
+    if abs(Stage.xScale - Camera.zoomLevel) > 0.0005 then
+        if Stage.xScale > Camera.zoomLevel then zoomDir = "out"
+        else zoomDir = "in" end
+    else zoomDir = "set" end
     if axis ~= "x" and axis ~= "y" then
         for i,v in ipairs(Stages) do
             local deltaX, deltaY
-            if v.axisLock == "x" then
-                deltaX, deltaY = ( centerX - Actor.x ) - v.x, ( centerY - Actor.y ) * v.depth - v.y
-            elseif v.axisLock == "y" then
-                deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) - v.y
-            else
-                deltaX, deltaY = ( centerX - Actor.x ) * v.depth - v.x, ( centerY - Actor.y ) * v.depth - v.y
+            if zoomDir then
+                if zoomDir == "out" then v:scale(0.999, 0.999)
+                elseif zoomDir == "in" then v:scale(1.001, 1.001)
+                else v.xScale, v.yScale = Camera.zoomLevel, Camera.zoomLevel end
             end
+            if v.axisLock == "x" then
+                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+            elseif v.axisLock == "y" then
+                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) - v.y
+            else
+                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+            end
+
             v.x, v.y = v.x + deltaX / Easing, v.y + deltaY / Easing
         end
     elseif axis == "x" then
+        print("axis = x")
         for i,v in ipairs(Stages) do
             local deltaX
             if buffer then
@@ -70,6 +85,7 @@ local setPositions = function( axis, buffer, speed )
             end
         end
     else
+        print("axis = y")
         for i,v in ipairs(Stages) do
             local deltaX
             if v.axisLock == "x" then
@@ -162,6 +178,7 @@ Camera.add = function( obj, depth, axisLock )
             obj:translate(-stg.x, -stg.y)
         else
             stg = display.newGroup()
+            --stg:setReferencePoint(display.c)
             stg.depth = depth
             stg.axisLock = axisLock
             stg:insert(obj)
@@ -208,8 +225,15 @@ end
 Camera.moveTo = function( x, y, scale )
 end
 
+Camera.zoomTo = function( num )
+    Camera.zoomLevel = num
+end
+
 -- TODO Pinch zoom
-Camera.zoom = function( event )
+Camera.zoom = function( num )
+    for i,v in ipairs(Stages) do
+        transition.to(v, {time=2000, xScale=-0.2, yScale=-0.2, delta=true, transition=easing.inOutQuad})
+    end
 end
 
 Camera.tiles = {}
@@ -240,11 +264,12 @@ Camera.init = function( directorGroup )
     if not Running then
         Running = true
         Stage = display.newGroup()
+        --Stage:setReferencePoint(display.c)
         Stage.depth = 1
         Stages[1] = Stage
         StageHolder:insert(Stage)
 
-        screen = display.newRect( screenX, screenY, screenWidth, screenHeight)
+        screen = display.newRect( screenX, screenY, screenWidth, screenHeight, "c")
         screen.isVisible = false
         Stage:insert(screen)
 
@@ -263,14 +288,6 @@ Camera.kill = function()
     while i > 0 do
         g = table.remove(Stages)
         if usingDirector then
-            for key,value in ipairs(g) do
-                --if g.numChildren then
-                --for i,v in ipairs(g) do
-                --display.remove(v)
-                --end
-                --end
-                display.remove(value)
-            end
             display.remove(g)
         end
         i = i-1
