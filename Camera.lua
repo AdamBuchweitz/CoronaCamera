@@ -240,12 +240,12 @@ Camera.tiles = {}
 Camera.tile = function(path, w, h, depth, lock)
     local tiler = {}
 
-    tiler.one = display.newImageRect(path, w, h, "bl")
-    if not tiler.one then
+    if type(path) == "string" then
+        tiler.one = display.newImageRect(path, w, h, "bl")
+        tiler.two = display.newImageRect(path, w, h, "br")
+    else
         tiler.one = path[1]:grabSprite(path[2], true)
         tiler.two = path[1]:grabSprite(path[2], true)
-    else
-        tiler.two = display.newImageRect(path, w, h, "br")
     end
 
     tiler.two.xScale = -1
