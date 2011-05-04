@@ -31,7 +31,10 @@ local cameraBounds
 -- Motion ease
 local Easing = 5
 
-local abs = math.abs
+local abs    = math.abs
+local flr    = math.floor
+local ceil   = math.ceil
+local tonum  = tonumber
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
 local usingDirector = false
@@ -238,25 +241,42 @@ end
 
 Camera.tiles = {}
 Camera.tile = function(path, w, h, depth, lock)
-    local tiler = {}
 
-    if type(path) == "string" then
-        tiler.one = display.newImageRect(path, w, h, "bl")
-        tiler.two = display.newImageRect(path, w, h, "br")
-    else
-        tiler.one = path[1]:grabSprite(path[2], true)
-        tiler.two = path[1]:grabSprite(path[2], true)
+    local newTile = function()
+        if type(path) == "string" then
+            return display.newImageRect(path, w, h)
+        else
+            return path[1]:grabSprite(path[2], true)
+        end
     end
 
-    tiler.two.xScale = -1
+    if not Camera.tileWidth then
+        error("No tileWidth! Please set the Camera.tileWidth first")
+        return false
+    end
+
+    local tiler = display.newGroup()
+
+    local numTiles, t = ceil(Camera.tileWidth / w)
+    repeat
+        numTiles = numTiles + 1
+    until numTiles * w >= Camera.tileWidth
+
+    for i=0, numTiles do
+        t = newTile( path )
+        t:setReferencePoint(display.BottomLeftReferencePoint)
+        t.x, t.y = i*t.contentWidth - i, t.y + t.contentHeight
+        if flr(i/2) ~= i/2 then
+            t.xScale = t.xScale * -1
+            t.x = t.x + t.contentWidth
+        end
+        tiler:insert(t)
+    end
+    Camera.add(tiler, depth, lock)
 
     tiler.position = function( self, x, y )
-        Camera.add(tiler.one, depth, lock)
-        Camera.add(tiler.two, depth, lock)
-        tiler.one.x, tiler.one.y = x, y
-        tiler.two.x, tiler.two.y = x + tiler.one.width, y
-        tiler.parent = tiler.one.parent
-        tiler.width = tiler.one.width * -2
+        tiler:setReferencePoint(display.BottomLeftReferencePoint)
+        tiler.x, tiler.y = x, y - tiler.contentHeight
     end
 
     Camera.tiles[#Camera.tiles+1] = tiler
