@@ -241,8 +241,13 @@ Camera.tile = function(path, w, h, depth, lock)
     local tiler = {}
 
     tiler.one = display.newImageRect(path, w, h, "bl")
+    if not tiler.one then
+        tiler.one = path[1]:grabSprite(path[2], true)
+        tiler.two = path[1]:grabSprite(path[2], true)
+    else
+        tiler.two = display.newImageRect(path, w, h, "br")
+    end
 
-    tiler.two = display.newImageRect(path, w, h, "br")
     tiler.two.xScale = -1
 
     tiler.position = function( self, x, y )
