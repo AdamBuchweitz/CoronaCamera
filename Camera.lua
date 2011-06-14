@@ -257,7 +257,7 @@ Camera.tile = function(path, w, h, depth, lock)
 
     local tiler = display.newGroup()
 
-    local numTiles, t = ceil(Camera.tileWidth / w)
+    local numTiles, t = ceil(Camera.tileWidth / w) + 1
     repeat
         numTiles = numTiles + 1
     until numTiles * w >= Camera.tileWidth
