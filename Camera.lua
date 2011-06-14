@@ -225,7 +225,22 @@ Camera.trackFinger = function()
 end
 
 -- TODO Transition to point
-Camera.moveTo = function( x, y, scale )
+Camera.panning = false
+
+local panningActor = display.newRect(0, 0, 5, 5)
+panningActor.isVisible = false
+panningActor.x, panningActor.y = centerX, centerY
+
+Camera.pan = function( args )
+    Camera.panning = true
+    Camera.track(panningActor)
+
+    transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad, onComplete=
+        function()
+            Camera.panning=false
+            if args.callback then args.callback() end
+        end
+    })
 end
 
 Camera.zoomTo = function( num )
