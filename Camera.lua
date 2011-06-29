@@ -227,20 +227,29 @@ end
 -- TODO Transition to point
 Camera.panning = false
 
-local panningActor = display.newRect(0, 0, 5, 5)
-panningActor.isVisible = false
-panningActor.x, panningActor.y = centerX, centerY
+local panningActor
+
+local getPanningActor = function()
+    if not panningActor then
+        panningActor = display.newRect(0, 0, 5, 5)
+        panningActor.isVisible = false
+        panningActor.x, panningActor.y = centerX, centerY
+    end
+    return panningActor
+end
 
 Camera.pan = function( args )
-    Camera.panning = true
-    Camera.track(panningActor)
 
-    transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad, onComplete=
-        function()
-            Camera.panning=false
-            if args.callback then args.callback() end
-        end
-    })
+    Camera.panning = true
+    Camera.track(getPanningActor())
+
+    transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad })
+    local onComplete = function()
+        Camera.panning = false
+        Camera.untrack()
+        if args.callback then args.callback() end
+    end
+    timer.performWithDelay(args.time * Easing * 0.2, onComplete, false)
 end
 
 Camera.zoomTo = function( num )
