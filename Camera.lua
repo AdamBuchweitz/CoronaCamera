@@ -227,7 +227,7 @@ end
 -- TODO Transition to point
 Camera.panning = false
 
-local panningActor
+local panningActor, panTransition, panTimer
 
 local getPanningActor = function()
     if not panningActor then
@@ -243,13 +243,29 @@ Camera.pan = function( args )
     Camera.panning = true
     Camera.track(getPanningActor())
 
-    transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad })
+    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad })
     local onComplete = function()
         Camera.panning = false
         Camera.untrack()
         if args.callback then args.callback() end
     end
-    timer.performWithDelay(args.time * Easing * 0.2, onComplete, false)
+    panTimer = timer.performWithDelay(args.time * Easing * 0.5, onComplete, false)
+end
+
+Camera.cancelPan = function()
+    timer.cancel(panTimer)
+    transition.cancel(panTransition)
+
+    Camera.panning = false
+
+    if Actor == panningActor then
+        Camera.untrack()
+        display.remove(panningActor)
+        for key,value in pairs(panningActor) do
+            v = nil
+        end
+        panningActor = nil
+    end
 end
 
 Camera.zoomTo = function( num )
