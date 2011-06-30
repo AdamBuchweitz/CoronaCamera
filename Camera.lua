@@ -38,6 +38,7 @@ local tonum  = tonumber
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
 local usingDirector = false
+local cullCount, cull = 0
 
 Camera.zoomLevel = 1
 
@@ -63,7 +64,11 @@ local setPositions = function( axis, buffer, speed )
                 deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
             end
 
-            v.x, v.y = v.x + deltaX / Easing, v.y + deltaY / Easing
+            local xEase = Easing - Actor.xSpeed / Easing * 1.8
+            local yEase = Easing - Actor.ySpeed / Easing * 1.8
+            if xEase < 1 then xEase = 1 end
+            if yEase < 1 then yEase = 1 end
+            v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
         end
     elseif axis == "x" then
         print("axis = x")
@@ -111,8 +116,10 @@ end
 local left, top, right, bottom
 Camera.enterFrame = function( event )
     if Actor then
-        local speed = math.abs(Actor.xPrev - Actor.x)
+        Actor.xSpeed = math.abs(Actor.xPrev - Actor.x)
+        Actor.ySpeed = math.abs(Actor.yPrev - Actor.y)
         Actor.xPrev = Actor.x
+        Actor.yPrev = Actor.y
         if cameraBounds then
 
             right  = Actor.x - screen.x > cameraBounds.left --+ 100
@@ -144,20 +151,36 @@ Camera.enterFrame = function( event )
         end
     end
     --if #Camera.tiles then
-        --for i,v in ipairs(Camera.tiles) do
-            --local gx, gy = v.one:localToContent( 0, 0 )
-            ----print(gx, gy)
-            --if v.parent.x < v.width then
-                --print("got to parallax")
-            --end
-        --end
+    --for i,v in ipairs(Camera.tiles) do
+    --local gx, gy = v.one:localToContent( 0, 0 )
+    ----print(gx, gy)
+    --if v.parent.x < v.width then
+    --print("got to parallax")
     --end
+    --end
+    --end
+end
+
+cull = function()
+    local a, o = Actor
+    for i=1, Stage.numChildren do
+        o = Stage[i]
+        if o.y < a.y - screenHeight or o.y > a.y + screenHeight then
+            o.isVisible = false
+        else o.isVisible = true end
+        if o.x < a.x - screenWidth or o.x > a.x + screenWidth then
+            o.isVisible = false
+        else o.isVisible = true end
+    end
+    if panningActor then panningActor.isVisible = false end
+    screen.isVisible = false
 end
 
 Camera.track = function( obj )
     local onDelay = function()
         Actor = obj
-        Actor.xPrev = 0
+        Actor.xPrev = Actor.x
+        Actor.yPrev = Actor.y
         Stage:insert(Actor)
     end
     timer.performWithDelay(100, onDelay, false)
@@ -186,7 +209,6 @@ Camera.add = function( obj, depth, axisLock )
             stg.axisLock = axisLock
             stg:insert(obj)
             Stages[ #Stages+1 ] = stg
-            local pos = nil
             if depth > 0 then
                 for i=2, #Stages do
                     if depth <= Stages[i].depth then
@@ -196,6 +218,7 @@ Camera.add = function( obj, depth, axisLock )
                     end
                 end
             else
+                print("negative depth")
             end
         end
     else
