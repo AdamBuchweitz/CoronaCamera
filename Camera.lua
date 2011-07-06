@@ -49,6 +49,7 @@ local setPositions = function( axis, buffer, speed )
         else zoomDir = "in" end
     else zoomDir = "set" end
     if axis ~= "x" and axis ~= "y" then
+
         for i,v in ipairs(Stages) do
             local deltaX, deltaY
             if zoomDir then
@@ -70,6 +71,7 @@ local setPositions = function( axis, buffer, speed )
             if yEase < 1 then yEase = 1 end
             v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
         end
+
     elseif axis == "x" then
         print("axis = x")
         for i,v in ipairs(Stages) do
@@ -116,8 +118,8 @@ end
 local left, top, right, bottom
 Camera.enterFrame = function( event )
     if Actor then
-        Actor.xSpeed = math.abs(Actor.xPrev - Actor.x)
-        Actor.ySpeed = math.abs(Actor.yPrev - Actor.y)
+        Actor.xSpeed = abs(Actor.xPrev - Actor.x)
+        Actor.ySpeed = abs(Actor.yPrev - Actor.y)
         Actor.xPrev = Actor.x
         Actor.yPrev = Actor.y
         if cameraBounds then
@@ -150,15 +152,22 @@ Camera.enterFrame = function( event )
             setPositions()
         end
     end
-    --if #Camera.tiles then
-    --for i,v in ipairs(Camera.tiles) do
-    --local gx, gy = v.one:localToContent( 0, 0 )
-    ----print(gx, gy)
-    --if v.parent.x < v.width then
-    --print("got to parallax")
-    --end
-    --end
-    --end
+    if #Camera.tiles > 0 then
+        for i,v in ipairs(Camera.tiles) do
+            local kids = v.numChildren
+            for i=1, kids do
+                local t = v[i]
+                local gx, gy = v[i]:localToContent( 0, 0 )
+                if gx + t.contentWidth*0.5 < 0 then
+                    print("forward", i)
+                    t:translate(t.contentWidth*kids,0)
+                elseif gx - t.contentWidth*0.5 > t.contentWidth * (kids - 1) then
+                    print("backword", i)
+                    t:translate(t.contentWidth*-kids,0)
+                end
+            end
+        end
+    end
 end
 
 cull = function()
@@ -320,18 +329,18 @@ Camera.tile = function(path, w, h, depth, lock)
 
     local tiler = display.newGroup()
 
-    local numTiles, t = ceil(Camera.tileWidth / w) + 1
-    repeat
-        numTiles = numTiles + 1
-    until numTiles * w >= Camera.tileWidth
+    local numTiles, t = ceil(screenWidth / w)
+    --repeat
+        --numTiles = numTiles + 1
+    --until numTiles * w >= Camera.tileWidth
 
     for i=0, numTiles do
         t = newTile( path )
-        t:setReferencePoint(display.BottomLeftReferencePoint)
-        t.x, t.y = i*t.contentWidth - i, t.y + t.contentHeight
+        t:setReferencePoint(display.BottomCenterReferencePoint)
+        t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
         if flr(i/2) ~= i/2 then
             t.xScale = t.xScale * -1
-            t.x = t.x + t.contentWidth
+            --t.x = t.x + t.contentWidth
         end
         tiler:insert(t)
     end
@@ -372,6 +381,11 @@ end
 Camera.kill = function()
     Actor = nil
     Runtime:removeEventListener("enterFrame", Camera)
+
+    while #Camera.tiles > 0 do
+        table.remove(Camera.tiles)
+    end
+
     local i, g = #Stages
     while i > 0 do
         g = table.remove(Stages)
