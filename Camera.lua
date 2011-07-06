@@ -159,10 +159,8 @@ Camera.enterFrame = function( event )
                 local t = v[i]
                 local gx, gy = v[i]:localToContent( 0, 0 )
                 if gx + t.contentWidth*0.5 < 0 then
-                    print("forward", i)
                     t:translate(t.contentWidth*kids,0)
                 elseif gx - t.contentWidth*0.5 > t.contentWidth * (kids - 1) then
-                    print("backword", i)
                     t:translate(t.contentWidth*-kids,0)
                 end
             end
@@ -275,7 +273,7 @@ Camera.pan = function( args )
     Camera.panning = true
     Camera.track(getPanningActor())
 
-    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=easing.inOutQuad })
+    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=args.ease or easing.inOutQuad })
     local onComplete = function()
         Camera.panning = false
         Camera.untrack()
