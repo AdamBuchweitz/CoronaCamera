@@ -152,17 +152,34 @@ Camera.enterFrame = function( event )
             setPositions()
         end
     end
+
     if #Camera.tiles > 0 then
+
+        -- cycle through every tilerr
         for i,v in ipairs(Camera.tiles) do
-            local kids = v.numChildren
-            for i=1, kids do
-                local t = v[i]
-                local gx, gy = v[i]:localToContent( 0, 0 )
-                if gx + t.contentWidth*0.5 < 0 then
-                    t:translate(t.contentWidth*kids,0)
-                elseif gx - t.contentWidth*0.5 > t.contentWidth * (kids - 1) then
-                    t:translate(t.contentWidth*-kids,0)
-                end
+
+            local childArr = v.children
+
+            -- how many children are there?
+            local numChildren = #childArr
+
+            -- this is the last tiler in the group
+            local lastChild = childArr[numChildren]
+            -- this is the first tiler in the group
+            local firstChild = childArr[1]
+
+            local fx, fy = firstChild:localToContent( 0, 0 )
+            local lx, ly = lastChild:localToContent( 0, 0 )
+            if fx < 0 - firstChild.contentWidth then
+
+                -- set the tile at the last childs x position and add a width
+                firstChild.x = lastChild.x + lastChild.contentWidth
+                table.insert(childArr, table.remove(childArr, 1))
+            elseif lx > screenWidth + firstChild.contentWidth then
+
+                -- set the tile and the first childs x position and subtract a width
+                lastChild.x = firstChild.x - lastChild.contentWidth
+                table.insert(childArr, 1, table.remove(childArr))
             end
         end
     end
@@ -326,13 +343,14 @@ Camera.tile = function(path, w, h, depth, lock)
     end
 
     local tiler = display.newGroup()
+    tiler.children = {}
 
     local numTiles, t = ceil(screenWidth / w)
     --repeat
         --numTiles = numTiles + 1
     --until numTiles * w >= Camera.tileWidth
 
-    for i=0, numTiles do
+    for i=0, numTiles + 1 do
         t = newTile( path )
         t:setReferencePoint(display.BottomCenterReferencePoint)
         t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
@@ -341,6 +359,7 @@ Camera.tile = function(path, w, h, depth, lock)
             --t.x = t.x + t.contentWidth
         end
         tiler:insert(t)
+        tiler.children[i+1] = t
     end
     Camera.add(tiler, depth, lock)
 
