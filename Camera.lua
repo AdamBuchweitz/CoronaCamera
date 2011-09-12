@@ -384,7 +384,6 @@ Camera.tile = function(path, w, h, depth, lock, axis)
             t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
             if flr(i/2) ~= i/2 then
                 t.xScale = t.xScale * -1
-                --t.x = t.x + t.contentWidth
             end
             tiler:insert(t)
             tiler.children[i+1] = t
@@ -393,14 +392,12 @@ Camera.tile = function(path, w, h, depth, lock, axis)
         Camera.vTiles[#Camera.vTiles+1] = tiler
         numTiles = ceil(screenHeight / h)
 
-        print(numTiles)
         for i=0, numTiles + 1 do
             t = newTile( path )
             t:setReferencePoint(display.CenterLeftReferencePoint)
             t.x, t.y = t.x + t.contentWidth, t.contentHeight*0.5+i*t.contentHeight
             if flr(i/2) ~= i/2 then
                 t.yScale = t.yScale * -1
-                --t.x = t.x + t.contentWidth
             end
             tiler:insert(t)
             tiler.children[i+1] = t
@@ -431,11 +428,7 @@ Camera.init = function( directorGroup )
         screen.isVisible = false
         Stage:insert(screen)
 
-        if package.loaded["gameLoop"] then
-            require("gameLoop").add(Camera.enterFrame)
-        else
-            Runtime:addEventListener("enterFrame", Camera)
-        end
+        Runtime:addEventListener("enterFrame", Camera)
     end
     if usingDirector then
         directorGroup:insert(StageHolder)
@@ -445,14 +438,14 @@ end
 -- TODO this will need to loop through and remove all objects and their fields
 Camera.kill = function()
     Actor = nil
-    if package.loaded["gameLoop"] then
-        require("gameLoop").remove(Camera.enterFrame)
-    else
-        Runtime:removeEventListener("enterFrame", Camera)
+    Runtime:removeEventListener("enterFrame", Camera)
+
+    while #Camera.hTiles > 0 do
+        table.remove(Camera.hTiles)
     end
 
-    while #Camera.tiles > 0 do
-        table.remove(Camera.tiles)
+    while #Camera.vTiles > 0 do
+        table.remove(Camera.vTiles)
     end
 
     local i, g = #Stages
