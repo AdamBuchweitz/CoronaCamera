@@ -153,12 +153,12 @@ Camera.enterFrame = function( event )
         end
     end
 
-    if #Camera.tiles > 0 then
+    if #Camera.hTiles > 0 then
 
         -- cycle through every tilerr
-        for i,v in ipairs(Camera.tiles) do
+        for i=1, #Camera.hTiles do
 
-            local childArr = v.children
+            local childArr = Camera.hTiles[i].children
 
             -- how many children are there?
             local numChildren = #childArr
@@ -179,6 +179,37 @@ Camera.enterFrame = function( event )
 
                 -- set the tile and the first childs x position and subtract a width
                 lastChild.x = firstChild.x - lastChild.contentWidth
+                table.insert(childArr, 1, table.remove(childArr))
+            end
+        end
+    end
+
+    if #Camera.vTiles > 0 then
+
+        -- cycle through every tilerr
+        for i=1, #Camera.vTiles do
+
+            local childArr = Camera.vTiles[i].children
+
+            -- how many children are there?
+            local numChildren = #childArr
+
+            -- this is the last tiler in the group
+            local lastChild = childArr[numChildren]
+            -- this is the first tiler in the group
+            local firstChild = childArr[1]
+
+            local fx, fy = firstChild:localToContent( 0, 0 )
+            local lx, ly = lastChild:localToContent( 0, 0 )
+            if fy < 0 - firstChild.contentHeight then
+
+                -- set the tile at the last childs x position and add a width
+                firstChild.y = lastChild.y + lastChild.contentHeight
+                table.insert(childArr, table.remove(childArr, 1))
+            elseif ly > screenHeight + firstChild.contentHeight then
+
+                -- set the tile and the first childs x position and subtract a width
+                lastChild.y = firstChild.y - lastChild.contentHeight
                 table.insert(childArr, 1, table.remove(childArr))
             end
         end
@@ -326,8 +357,9 @@ Camera.zoom = function( num )
     end
 end
 
-Camera.tiles = {}
-Camera.tile = function(path, w, h, depth, lock)
+Camera.hTiles = {}
+Camera.vTiles = {}
+Camera.tile = function(path, w, h, depth, lock, axis)
 
     local newTile = function()
         if type(path) == "string" then
@@ -337,38 +369,50 @@ Camera.tile = function(path, w, h, depth, lock)
         end
     end
 
-    if not Camera.tileWidth then
-        error("No tileWidth! Please set the Camera.tileWidth first")
-        return false
-    end
-
     local tiler = display.newGroup()
     tiler.children = {}
 
-    local numTiles, t = ceil(screenWidth / w)
-    --repeat
-        --numTiles = numTiles + 1
-    --until numTiles * w >= Camera.tileWidth
+    local axis, numTiles, t = axis or "h"
 
-    for i=0, numTiles + 1 do
-        t = newTile( path )
-        t:setReferencePoint(display.BottomCenterReferencePoint)
-        t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
-        if flr(i/2) ~= i/2 then
-            t.xScale = t.xScale * -1
-            --t.x = t.x + t.contentWidth
+    if axis == "h" then
+        Camera.hTiles[#Camera.hTiles+1] = tiler
+        numTiles = ceil(screenWidth / w)
+
+        for i=0, numTiles + 1 do
+            t = newTile( path )
+            t:setReferencePoint(display.BottomCenterReferencePoint)
+            t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
+            if flr(i/2) ~= i/2 then
+                t.xScale = t.xScale * -1
+                --t.x = t.x + t.contentWidth
+            end
+            tiler:insert(t)
+            tiler.children[i+1] = t
         end
-        tiler:insert(t)
-        tiler.children[i+1] = t
+    elseif axis == "v" then
+        Camera.vTiles[#Camera.vTiles+1] = tiler
+        numTiles = ceil(screenHeight / h)
+
+        print(numTiles)
+        for i=0, numTiles + 1 do
+            t = newTile( path )
+            t:setReferencePoint(display.CenterLeftReferencePoint)
+            t.x, t.y = t.x + t.contentWidth, t.contentHeight*0.5+i*t.contentHeight
+            if flr(i/2) ~= i/2 then
+                t.yScale = t.yScale * -1
+                --t.x = t.x + t.contentWidth
+            end
+            tiler:insert(t)
+            tiler.children[i+1] = t
+        end
     end
+
     Camera.add(tiler, depth, lock)
 
     tiler.position = function( self, x, y )
         tiler:setReferencePoint(display.BottomLeftReferencePoint)
         tiler.x, tiler.y = x, y - tiler.contentHeight
     end
-
-    Camera.tiles[#Camera.tiles+1] = tiler
 
     return tiler
 end
