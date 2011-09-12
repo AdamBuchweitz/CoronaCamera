@@ -387,7 +387,11 @@ Camera.init = function( directorGroup )
         screen.isVisible = false
         Stage:insert(screen)
 
-        Runtime:addEventListener("enterFrame", Camera)
+        if package.loaded["gameLoop"] then
+            require("gameLoop").add(Camera.enterFrame)
+        else
+            Runtime:addEventListener("enterFrame", Camera)
+        end
     end
     if usingDirector then
         directorGroup:insert(StageHolder)
@@ -397,7 +401,11 @@ end
 -- TODO this will need to loop through and remove all objects and their fields
 Camera.kill = function()
     Actor = nil
-    Runtime:removeEventListener("enterFrame", Camera)
+    if package.loaded["gameLoop"] then
+        require("gameLoop").remove(Camera.enterFrame)
+    else
+        Runtime:removeEventListener("enterFrame", Camera)
+    end
 
     while #Camera.tiles > 0 do
         table.remove(Camera.tiles)
