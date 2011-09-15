@@ -461,5 +461,17 @@ Camera.kill = function()
     Running = false
 end
 
+Camera.setAlpha = function(n)
+    StageHolder.alpha = n
+end
+
+Camera.getActor = function()
+    return Actor or panningActor
+end
+
+Camera.getStage = function()
+    return StageHolder
+end
+
 return Camera
 
