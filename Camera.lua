@@ -74,12 +74,10 @@ local setPositions = function( axis, buffer, speed )
         end
 
     elseif axis == "x" then
-        print("axis = x")
         for i,v in ipairs(Stages) do
             local deltaX
             if buffer then
                 deltaX = ( centerX - Actor.x )
-                --print( screen.x - v.x)
                 if buffer == "left" then
                     --v.x = v.x + deltaX
                     v.x = v.x + ( screen.x - v.x ) / Easing
@@ -96,7 +94,6 @@ local setPositions = function( axis, buffer, speed )
             end
         end
     else
-        print("axis = y")
         for i,v in ipairs(Stages) do
             local deltaX
             if v.axisLock == "x" then
@@ -233,14 +230,17 @@ cull = function()
 end
 
 Camera.track = function( obj )
-    local onDelay = function()
-        Actor = obj
-        Actor.xPrev = Actor.x
-        Actor.yPrev = Actor.y
-        Stage:insert(Actor)
+    local onDelay
+    onDelay = function()
+        if obj and Stage then
+            Actor = obj
+            Actor.xPrev = Actor.x
+            Actor.yPrev = Actor.y
+            Stage:insert(Actor)
+        end
+        onDelay = nil
     end
     timer.performWithDelay(100, onDelay, false)
-    --Stage.x, Stage.y = centerX - Actor.x, centerX - Actor.y
 end
 
 Camera.untrack = function()
@@ -273,8 +273,6 @@ Camera.add = function( obj, depth, axisLock )
                         break
                     end
                 end
-            else
-                print("negative depth")
             end
         end
     else
@@ -299,14 +297,11 @@ Camera.setMotionEase = function( num )
     end
 end
 
--- TODO Pan
-Camera.trackFinger = function()
-end
+local panningActor, panTransition, panTimer
+local xOrigin, yOrigin
 
 -- TODO Transition to point
 Camera.panning = false
-
-local panningActor, panTransition, panTimer
 
 local getPanningActor = function()
     if not panningActor then
@@ -317,18 +312,54 @@ local getPanningActor = function()
     return panningActor
 end
 
+onTouch = function(e)
+    if e.phase == "began" or not xOrigin then
+        local a = getPanningActor()
+
+        xOrigin, yOrigin = a.x, a.y
+
+        if dragEnabled == "y" then a.y = yOrigin
+        elseif dragEnabled == "x" then a.x = xOrigin
+        else a.x, a.y = xOrigin, yOrigin end
+
+        Camera.panning = true
+        Camera.track(a)
+    elseif e.phase == "moved" then
+        if dragEnabled == "y" then panningActor.y = yOrigin + e.yStart - e.y
+        elseif dragEnabled == "x" then panningActor.x = xOrigin + e.xStart - e.x
+        else panningActor.x, panningActor.y = xOrigin + e.xStart - e.x, yOrigin + e.yStart - e.y end
+    else
+        Camera.panning = false
+        Camera.untrack()
+    end
+end
+
+Camera.enableDrag = function(axis)
+    if not dragEnabled then
+        dragEnabled = axis or true
+        Runtime:addEventListener("touch", onTouch)
+    end
+end
+
+Camera.disableDrag = function()
+    if dragEnabled then
+        dragEnabled = nil
+        Runtime:removeEventListener("touch", onTouch)
+    end
+end
+
 Camera.pan = function( args )
 
     Camera.panning = true
     Camera.track(getPanningActor())
 
-    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta, transition=args.ease or easing.inOutQuad })
+    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta ~= false, transition=args.ease or easing.inOutQuad, onComplete=args.onComplete })
     local onComplete = function()
         Camera.panning = false
         Camera.untrack()
         if args.callback then args.callback() end
     end
-    panTimer = timer.performWithDelay(args.time * Easing * 0.5, onComplete, false)
+    --panTimer = timer.performWithDelay(args.time * Easing * 0.5, onComplete, false)
 end
 
 Camera.cancelPan = function()
@@ -441,6 +472,12 @@ Camera.kill = function()
     Actor = nil
     Runtime:removeEventListener("enterFrame", Camera)
 
+    Camera.untrack()
+
+    if dragEnabled then
+        Camera.disableDrag()
+    end
+
     while #Camera.hTiles > 0 do
         table.remove(Camera.hTiles)
     end
@@ -449,15 +486,11 @@ Camera.kill = function()
         table.remove(Camera.vTiles)
     end
 
-    local i, g = #Stages
-    while i > 0 do
-        g = table.remove(Stages)
-        if usingDirector then
-            display.remove(g)
-        end
-        i = i-1
+    while #Stages > 0 do
+        display.remove(table.remove(Stages))
     end
-    EscapeGroup:insert(StageHolder)
+
+    --EscapeGroup:insert(StageHolder)
     Running = false
 end
 
@@ -474,4 +507,3 @@ Camera.getStage = function()
 end
 
 return Camera
-
