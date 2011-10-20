@@ -506,4 +506,8 @@ Camera.getStage = function()
     return StageHolder
 end
 
+Camera.running = function()
+    return Running
+end
+
 return Camera
