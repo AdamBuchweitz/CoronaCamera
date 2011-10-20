@@ -138,14 +138,16 @@ Camera.enterFrame = function( event )
 
             if right and left then
                 xBuffer = false
-                setPositions("x")--, nil, speed
             elseif not left then -- right buffer
+                Actor.x = cameraBounds.right - 2
                 xBuffer = true
                 --setPositions("x", "right", speed)
             elseif not right then -- left buffer
+                Actor.x = cameraBounds.left + 2
                 xBuffer = true
                 --setPositions("x", "left", speed)
             end
+            setPositions("x")--, nil, speed
         else
             setPositions()
         end
