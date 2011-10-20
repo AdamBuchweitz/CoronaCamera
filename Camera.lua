@@ -279,6 +279,7 @@ Camera.add = function( obj, depth, axisLock )
         Stage:insert(obj)
         obj:translate(-Stage.x, -Stage.y)
     end
+    obj.depth = depth or 1
 end
 
 Camera.setCameraBounds = function( left, top, right, bottom)
