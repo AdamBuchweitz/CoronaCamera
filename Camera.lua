@@ -16,7 +16,7 @@ local Stage
 local Stages = {}
 
 -- Holder for all the stages
-local StageHolder = display.newGroup()
+local StageHolder
 --StageHolder:setReferencePoint(display.c)
 
 local EscapeGroup = display.newGroup()
@@ -448,14 +448,14 @@ Camera.tile = function(path, w, h, depth, lock, axis)
 end
 
 Camera.init = function( directorGroup )
-    usingDirector = directorGroup ~= nil
     if not Running then
         Running = true
+
         Stage = display.newGroup()
-        --Stage:setReferencePoint(display.c)
+        StageHolder = display.newGroup()
+        StageHolder:insert(Stage)
         Stage.depth = 1
         Stages[1] = Stage
-        StageHolder:insert(Stage)
 
         screen = display.newRect( screenX, screenY, screenWidth, screenHeight, "c")
         screen.isVisible = false
@@ -463,14 +463,12 @@ Camera.init = function( directorGroup )
 
         Runtime:addEventListener("enterFrame", Camera)
     end
-    if usingDirector then
-        directorGroup:insert(StageHolder)
-    end
 end
 
 -- TODO this will need to loop through and remove all objects and their fields
 Camera.kill = function()
     Actor = nil
+    panningActor = nil
     Runtime:removeEventListener("enterFrame", Camera)
 
     Camera.untrack()
@@ -490,6 +488,10 @@ Camera.kill = function()
     while #Stages > 0 do
         display.remove(table.remove(Stages))
     end
+    Stage = nil
+    Stages = {}
+    display.remove(StageHolder)
+    StageHolder = nil
 
     --EscapeGroup:insert(StageHolder)
     Running = false
