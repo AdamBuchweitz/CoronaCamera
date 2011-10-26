@@ -356,7 +356,7 @@ Camera.pan = function( args )
     Camera.panning = true
     Camera.track(getPanningActor())
 
-    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delta=args.delta ~= false, transition=args.ease or easing.inOutQuad, onComplete=args.onComplete })
+    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delay=args.delay, delta=args.delta ~= false, transition=args.ease or easing.inOutQuad, onComplete=args.onComplete })
     local onComplete = function()
         Camera.panning = false
         Camera.untrack()
