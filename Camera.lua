@@ -122,10 +122,10 @@ Camera.enterFrame = function( event )
         Actor.yPrev = Actor.y
         if cameraBounds then
 
-            right  = Actor.x - screen.x > cameraBounds.left --+ 100
-            left   = Actor.x - screen.x < cameraBounds.right -- 100
-            top    = Actor.y - screen.y < cameraBounds.bottom
-            bottom = Actor.y - screen.y > cameraBounds.top
+            right  = Actor.x - screen.x + display.screenOriginX > cameraBounds.left
+            left   = Actor.x - screen.x + display.screenOriginX < cameraBounds.right
+            top    = Actor.y - screen.y + display.screenOriginY < cameraBounds.bottom
+            bottom = Actor.y - screen.y + display.screenOriginY > cameraBounds.top
 
             if top and bottom then
                 yBuffer = false
