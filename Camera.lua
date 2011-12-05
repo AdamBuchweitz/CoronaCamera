@@ -52,11 +52,6 @@ local setPositions = function( axis, buffer, speed )
 
         for i,v in ipairs(Stages) do
             local deltaX, deltaY
-            if zoomDir then
-                if zoomDir == "out" then v:scale(0.999, 0.999)
-                elseif zoomDir == "in" then v:scale(1.001, 1.001)
-                else v.xScale, v.yScale = Camera.zoomLevel, Camera.zoomLevel end
-            end
             if v.axisLock == "x" then
                 deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
                 deltaX = 0
@@ -71,6 +66,17 @@ local setPositions = function( axis, buffer, speed )
             if xEase < 1 then xEase = 1 end
             if yEase < 1 then yEase = 1 end
             v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
+            if zoomDir then
+                if zoomDir == "out" then
+                    v:scale(0.999, 0.999)
+                    v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
+                elseif zoomDir == "in" then
+                    v:scale(1.001, 1.001)
+                    v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
+                else
+                    v.xScale, v.yScale = Camera.zoomLevel, Camera.zoomLevel
+                end
+            end
         end
 
     elseif axis == "x" then
