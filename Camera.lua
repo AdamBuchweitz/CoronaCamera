@@ -336,9 +336,6 @@ onTouch = function(e)
         if dragEnabled == "y" then panningActor.y = yOrigin + e.yStart - e.y
         elseif dragEnabled == "x" then panningActor.x = xOrigin + e.xStart - e.x
         else panningActor.x, panningActor.y = xOrigin + e.xStart - e.x, yOrigin + e.yStart - e.y end
-    else
-        Camera.panning = false
-        Camera.untrack()
     end
 end
 
