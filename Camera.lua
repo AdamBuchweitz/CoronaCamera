@@ -310,6 +310,10 @@ local getPanningActor = function()
     if not panningActor then
         panningActor = display.newRect(0, 0, 5, 5)
         panningActor.isVisible = false
+    end
+    if Actor then
+        panningActor.x, panningActor.y = Actor.x, Actor.y
+    else
         panningActor.x, panningActor.y = centerX, centerY
     end
     return panningActor
@@ -318,6 +322,7 @@ end
 onTouch = function(e)
     if e.phase == "began" or not xOrigin then
         local a = getPanningActor()
+        a.x, a.y = Stage:contentToLocal(e.x + (centerX - e.x), e.y + (centerY - e.y))
 
         xOrigin, yOrigin = a.x, a.y
 
@@ -374,9 +379,6 @@ Camera.cancelPan = function()
     if Actor == panningActor then
         Camera.untrack()
         display.remove(panningActor)
-        for key,value in pairs(panningActor) do
-            v = nil
-        end
         panningActor = nil
     end
 end
