@@ -65,7 +65,11 @@ local setPositions = function( axis, buffer, speed )
             local yEase = Easing - Actor.ySpeed / Easing * 1.8
             if xEase < 1 then xEase = 1 end
             if yEase < 1 then yEase = 1 end
-            v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
+            if Camera.panning then
+                v.x, v.y = ( centerX / v.xScale - Actor.x ) * v.depth, ( centerY / v.yScale - Actor.y ) * v.depth
+            else
+                v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
+            end
             if zoomDir then
                 if zoomDir == "out" then
                     v:scale(0.999, 0.999)
@@ -336,7 +340,7 @@ onTouch = function(e)
         elseif dragEnabled == "x" then a.x = xOrigin
         else a.x, a.y = xOrigin, yOrigin end
 
-        Camera.panning = true
+        Camera.dragging = true
         Camera.track(a)
     elseif e.phase == "moved" then
         if dragEnabled == "y" then panningActor.y = yOrigin + e.yStart - e.y
@@ -364,13 +368,12 @@ Camera.pan = function( args )
     Camera.panning = true
     Camera.track(getPanningActor())
 
-    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delay=args.delay, delta=args.delta ~= false, transition=args.ease or easing.inOutQuad, onComplete=args.onComplete })
     local onComplete = function()
         Camera.panning = false
         Camera.untrack()
-        if args.callback then args.callback() end
+        if args.onComplete then args.onComplete() end
     end
-    --panTimer = timer.performWithDelay(args.time * Easing * 0.5, onComplete, false)
+    panTransition = transition.to(panningActor, {time=args.time, x=args.x, y=args.y, delay=args.delay, delta=args.delta ~= false, transition=args.ease or easing.inOutQuad, onComplete=onComplete })
 end
 
 Camera.cancelPan = function()
