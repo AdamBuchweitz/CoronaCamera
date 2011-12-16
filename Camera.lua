@@ -262,9 +262,9 @@ end
 Camera.add = function( obj, depth, axisLock )
     if depth then
         local stg
-        for i,v in ipairs(Stages) do
-            if v.depth == depth then
-                stg = v
+        for i=1, #Stages do
+            if Stages[i].depth == depth then
+                stg = Stages[i]
             end
         end
         if stg and stg.axisLock == axisLock then
@@ -515,8 +515,16 @@ Camera.getActor = function()
     return Actor or panningActor
 end
 
-Camera.getStage = function()
-    return StageHolder
+Camera.getStage = function(depth)
+    if depth then
+        for i=1, #Stages do
+            if Stages[i].depth == depth then
+                return Stages[i]
+            end
+        end
+    else
+        return StageHolder
+    end
 end
 
 Camera.running = function()
