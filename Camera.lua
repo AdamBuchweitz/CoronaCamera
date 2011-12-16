@@ -324,7 +324,7 @@ local getPanningActor = function()
     if Actor then
         panningActor.x, panningActor.y = Actor.x, Actor.y
     else
-        panningActor.x, panningActor.y = centerX, centerY
+        panningActor.x, panningActor.y = centerX - Stage.x, centerY - Stage.y
     end
     return panningActor
 end
