@@ -31,30 +31,32 @@ local cameraBounds
 -- Motion ease
 local Easing = 5
 
+local tInsert, tRemove = table.insert, table.remove
 local abs    = math.abs
 local flr    = math.floor
 local ceil   = math.ceil
 local tonum  = tonumber
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
-local usingDirector = false
 local cullCount, cull = 0
+local hTiles, vTiles = {}, {}
 
 Camera.zoomLevel = 1
 
 local zoomDir
 local setPositions = function( axis, buffer, speed )
-    if abs(Stage.xScale - Camera.zoomLevel) > 0.0005 then
-        if Stage.xScale > Camera.zoomLevel then zoomDir = "out"
-        else zoomDir = "in" end
-    else zoomDir = "set" end
+    --if abs(Stage.xScale - Camera.zoomLevel) > 0.0005 then
+        --if Stage.xScale > Camera.zoomLevel then zoomDir = "out"
+        --else zoomDir = "in" end
+    --else zoomDir = "set" end
     if axis ~= "x" and axis ~= "y" then
 
-        for i,v in ipairs(Stages) do
+        for i=1, #Stages do
+            local v = Stages[i]
             local deltaX, deltaY
             if v.axisLock == "x" then
-                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
-                deltaX = 0
+                deltaX, deltaY = 0, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+                --deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
             elseif v.axisLock == "y" then
                 deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) - v.y
             else
@@ -68,31 +70,32 @@ local setPositions = function( axis, buffer, speed )
             if Camera.panning then
                 v.x, v.y = ( centerX / v.xScale - Actor.x ) * v.depth, ( centerY / v.yScale - Actor.y ) * v.depth
             else
-                v.x, v.y = v.x + deltaX / xEase, v.y + deltaY / yEase
+                v:translate(deltaX / xEase, deltaY / yEase)
             end
-            if zoomDir then
-                if zoomDir == "out" then
-                    v:scale(0.999, 0.999)
-                    v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
-                elseif zoomDir == "in" then
-                    v:scale(1.001, 1.001)
-                    v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
-                else
-                    v.xScale, v.yScale = Camera.zoomLevel, Camera.zoomLevel
-                end
-            end
+            --if zoomDir then
+                --if zoomDir == "out" then
+                    --v:scale(0.999, 0.999)
+                    --v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
+                --elseif zoomDir == "in" then
+                    --v:scale(1.001, 1.001)
+                    --v:translate(v.contentWidth * -0.0005 * Camera.zoomLevel, v.contentHeight * -0.0005 * Camera.zoomLevel)
+                --else
+                    --v.xScale, v.yScale = Camera.zoomLevel, Camera.zoomLevel
+                --end
+            --end
         end
 
     elseif axis == "x" then
+        print('x')
         for i,v in ipairs(Stages) do
             local deltaX
             if buffer then
                 deltaX = ( centerX - Actor.x )
                 if buffer == "left" then
                     --v.x = v.x + deltaX
-                    v.x = v.x + ( screen.x - v.x ) / Easing
+                    v.x = v.x + ( screen.X - v.x ) / Easing
                 else
-                    v.x = screen.x + screen.width - v.width + 20
+                    v.x = screen.X + screen.width - v.width + 20
                 end
             else
                 if v.axisLock == "x" then
@@ -104,6 +107,7 @@ local setPositions = function( axis, buffer, speed )
             end
         end
     else
+        print('y')
         for i,v in ipairs(Stages) do
             local deltaX
             if v.axisLock == "x" then
@@ -126,16 +130,17 @@ end
 local left, top, right, bottom
 Camera.enterFrame = function( event )
     if Actor then
-        Actor.xSpeed = abs(Actor.xPrev - Actor.x)
-        Actor.ySpeed = abs(Actor.yPrev - Actor.y)
-        Actor.xPrev = Actor.x
-        Actor.yPrev = Actor.y
+        local x, y = Actor.x, Actor.y
+        Actor.xSpeed = abs(Actor.xPrev - x)
+        Actor.ySpeed = abs(Actor.yPrev - y)
+        Actor.xPrev = x
+        Actor.yPrev = y
         if cameraBounds then
 
-            right  = Actor.x - screen.x + display.screenOriginX > cameraBounds.left
-            left   = Actor.x - screen.x + display.screenOriginX < cameraBounds.right
-            top    = Actor.y - screen.y + display.screenOriginY < cameraBounds.bottom
-            bottom = Actor.y - screen.y + display.screenOriginY > cameraBounds.top
+            right  = x - screen.X + display.screenOriginX > cameraBounds.left
+            left   = x - screen.X + display.screenOriginX < cameraBounds.right
+            top    = y - screen.Y + display.screenOriginY < cameraBounds.bottom
+            bottom = y - screen.Y + display.screenOriginY > cameraBounds.top
 
             if top and bottom then
                 yBuffer = false
@@ -149,11 +154,11 @@ Camera.enterFrame = function( event )
             if right and left then
                 xBuffer = false
             elseif not left then -- right buffer
-                Actor.x = cameraBounds.right - 2
+                x = cameraBounds.right - 2
                 xBuffer = true
                 --setPositions("x", "right", speed)
             elseif not right then -- left buffer
-                Actor.x = cameraBounds.left + 2
+                x = cameraBounds.left + 2
                 xBuffer = true
                 --setPositions("x", "left", speed)
             end
@@ -163,12 +168,12 @@ Camera.enterFrame = function( event )
         end
     end
 
-    if #Camera.hTiles > 0 then
+    if #hTiles > 0 then
 
         -- cycle through every tilerr
-        for i=1, #Camera.hTiles do
+        for i=1, #hTiles do
 
-            local childArr = Camera.hTiles[i].children
+            local childArr = hTiles[i].children
 
             -- how many children are there?
             local numChildren = #childArr
@@ -184,22 +189,22 @@ Camera.enterFrame = function( event )
 
                 -- set the tile at the last childs x position and add a width
                 firstChild.x = lastChild.x + lastChild.contentWidth
-                table.insert(childArr, table.remove(childArr, 1))
+                tInsert(childArr, tRemove(childArr, 1))
             elseif lx > screenWidth + firstChild.contentWidth then
 
                 -- set the tile and the first childs x position and subtract a width
                 lastChild.x = firstChild.x - lastChild.contentWidth
-                table.insert(childArr, 1, table.remove(childArr))
+                tInsert(childArr, 1, tRemove(childArr))
             end
         end
     end
 
-    if #Camera.vTiles > 0 then
+    if #vTiles > 0 then
 
         -- cycle through every tilerr
-        for i=1, #Camera.vTiles do
+        for i=1, #vTiles do
 
-            local childArr = Camera.vTiles[i].children
+            local childArr = vTiles[i].children
 
             -- how many children are there?
             local numChildren = #childArr
@@ -215,12 +220,12 @@ Camera.enterFrame = function( event )
 
                 -- set the tile at the last childs x position and add a width
                 firstChild.y = lastChild.y + lastChild.contentHeight
-                table.insert(childArr, table.remove(childArr, 1))
+                tInsert(childArr, tRemove(childArr, 1))
             elseif ly > screenHeight + firstChild.contentHeight then
 
                 -- set the tile and the first childs x position and subtract a width
                 lastChild.y = firstChild.y - lastChild.contentHeight
-                table.insert(childArr, 1, table.remove(childArr))
+                tInsert(childArr, 1, tRemove(childArr))
             end
         end
     end
@@ -400,9 +405,10 @@ Camera.zoom = function( num )
     end
 end
 
-Camera.hTiles = {}
-Camera.vTiles = {}
 Camera.tile = function(path, w, h, depth, lock, axis)
+
+    local tiler = display.newGroup()
+    tiler.children = {}
 
     local newTile = function()
         if type(path) == "string" then
@@ -412,13 +418,10 @@ Camera.tile = function(path, w, h, depth, lock, axis)
         end
     end
 
-    local tiler = display.newGroup()
-    tiler.children = {}
-
     local axis, numTiles, t = axis or "h"
 
     if axis == "h" then
-        Camera.hTiles[#Camera.hTiles+1] = tiler
+        hTiles[#hTiles+1] = tiler
         numTiles = ceil(screenWidth / w)
 
         for i=0, numTiles + 1 do
@@ -469,6 +472,7 @@ Camera.init = function( directorGroup )
 
         screen = display.newRect( screenX, screenY, screenWidth, screenHeight, "c")
         screen.isVisible = false
+        screen.X, screen.Y = screen.x, screen.y
         Stage:insert(screen)
 
         Runtime:addEventListener("enterFrame", Camera)
@@ -487,16 +491,16 @@ Camera.kill = function()
         Camera.disableDrag()
     end
 
-    while #Camera.hTiles > 0 do
-        table.remove(Camera.hTiles)
+    while #hTiles > 0 do
+        tRemove(hTiles)
     end
 
-    while #Camera.vTiles > 0 do
-        table.remove(Camera.vTiles)
+    while #vTiles > 0 do
+        tRemove(vTiles)
     end
 
     while #Stages > 0 do
-        display.remove(table.remove(Stages))
+        display.remove(tRemove(Stages))
     end
     Stage = nil
     Stages = {}
