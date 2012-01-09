@@ -435,7 +435,7 @@ Camera.tile = function(path, w, h, depth, lock, axis)
             tiler.children[i+1] = t
         end
     elseif axis == "v" then
-        Camera.vTiles[#Camera.vTiles+1] = tiler
+        vTiles[#vTiles+1] = tiler
         numTiles = ceil(screenHeight / h)
 
         for i=0, numTiles + 1 do
