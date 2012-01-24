@@ -404,7 +404,8 @@ Camera.zoom = function( num )
     end
 end
 
-Camera.tile = function(path, w, h, depth, lock, axis)
+Camera.tile = function(path, w, h, depth, lock, axis, spacer)
+    local spacer = spacer or 0
 
     local tiler = display.newGroup()
     tiler.children = {}
@@ -421,7 +422,7 @@ Camera.tile = function(path, w, h, depth, lock, axis)
 
     if axis == "h" then
         hTiles[#hTiles+1] = tiler
-        numTiles = ceil(screenWidth / w)
+        numTiles = ceil(screenWidth / (w + spacer))
 
         for i=0, numTiles + 1 do
             t = newTile( path )
@@ -430,9 +431,11 @@ Camera.tile = function(path, w, h, depth, lock, axis)
             if flr(i/2) ~= i/2 then
                 t.xScale = t.xScale * -1
             end
+            t.x = w * i + spacer * i
             tiler:insert(t)
             tiler.children[i+1] = t
         end
+        tiler.totalWidth = (w + spacer) * (numTiles + 1)
     elseif axis == "v" then
         vTiles[#vTiles+1] = tiler
         numTiles = ceil(screenHeight / h)
