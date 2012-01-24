@@ -56,9 +56,8 @@ local setPositions = function( axis, buffer, speed )
             local deltaX, deltaY
             if v.axisLock == "x" then
                 deltaX, deltaY = 0, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
-                --deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
             elseif v.axisLock == "y" then
-                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) - v.y
+                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, 0
             else
                 deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
             end
