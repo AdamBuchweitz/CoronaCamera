@@ -184,15 +184,17 @@ Camera.enterFrame = function( event )
 
             local fx, fy = firstChild:localToContent( 0, 0 )
             local lx, ly = lastChild:localToContent( 0, 0 )
-            if fx < 0 - firstChild.contentWidth then
+            if fx + firstChild.contentWidth < screenLeft then
 
                 -- set the tile at the last childs x position and add a width
-                firstChild.x = lastChild.x + lastChild.contentWidth
+                --firstChild.x = lastChild.x + lastChild.contentWidth
+                firstChild:translate(hTiles[i].totalWidth, 0)
                 tInsert(childArr, tRemove(childArr, 1))
-            elseif lx > screenWidth + firstChild.contentWidth then
+            elseif lx > screenRight + hTiles[i].totalWidth * 1.5 then
 
                 -- set the tile and the first childs x position and subtract a width
-                lastChild.x = firstChild.x - lastChild.contentWidth
+                --lastChild.x = firstChild.x - lastChild.contentWidth
+                lastChild:translate(-hTiles[i].totalWidth, 0)
                 tInsert(childArr, 1, tRemove(childArr))
             end
         end
@@ -426,10 +428,10 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
 
         for i=0, numTiles + 1 do
             t = newTile( path )
-            t:setReferencePoint(display.BottomCenterReferencePoint)
-            t.x, t.y = t.contentWidth*0.5+i*t.contentWidth, t.y + t.contentHeight
-            if flr(i/2) ~= i/2 then
+            t:setReferencePoint(display.BottomLeftReferencePoint)
+            if i % 2 == 0 then
                 t.xScale = t.xScale * -1
+                t:setReferencePoint(display.BottomRightReferencePoint)
             end
             t.x = w * i + spacer * i
             tiler:insert(t)
@@ -443,20 +445,23 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
         for i=0, numTiles + 1 do
             t = newTile( path )
             t:setReferencePoint(display.CenterLeftReferencePoint)
-            t.x, t.y = t.x + t.contentWidth, t.contentHeight*0.5+i*t.contentHeight
-            if flr(i/2) ~= i/2 then
+            t.x, t.y = t.x + t.contentWidth, t.contentHeight*0.5+i*t.contentHeight + spacer * i
+            if i % 2 == 0 then
                 t.yScale = t.yScale * -1
+                t:translate(0,t.contentHeight)
             end
             tiler:insert(t)
             tiler.children[i+1] = t
         end
     end
 
+    tiler:setReferencePoint(display.BottomLeftReferencePoint)
+    tiler.x, tiler.y = screenLeft, screenBottom
+
     Camera.add(tiler, depth, lock)
 
-    tiler.position = function( self, x, y )
-        tiler:setReferencePoint(display.BottomLeftReferencePoint)
-        tiler.x, tiler.y = x, y - tiler.contentHeight
+    tiler.position = function( x, y )
+        tiler:translate(x,y)
     end
 
     return tiler
