@@ -53,22 +53,30 @@ local setPositions = function( axis, buffer, speed )
 
         for i=1, #Stages do
             local v = Stages[i]
-            local deltaX, deltaY
-            if v.axisLock == "x" then
-                deltaX, deltaY = 0, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
-            elseif v.axisLock == "y" then
-                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, 0
-            else
-                deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
-            end
 
-            local xEase = Easing - Actor.xSpeed / Easing * 1.8
-            local yEase = Easing - Actor.ySpeed / Easing * 1.8
-            if xEase < 1 then xEase = 1 end
-            if yEase < 1 then yEase = 1 end
             if Camera.panning then
-                v.x, v.y = ( centerX / v.xScale - Actor.x ) * v.depth, ( centerY / v.yScale - Actor.y ) * v.depth
+                if v.axisLock == "x" then
+                    v.y = ( centerY / v.yScale - Actor.y ) * v.depth
+                elseif v.axisLock == "y" then
+                    v.x = ( centerX / v.xScale - Actor.x ) * v.depth
+                else
+                    v.x, v.y = ( centerX / v.xScale - Actor.x ) * v.depth, ( centerY / v.yScale - Actor.y ) * v.depth
+                end
             else
+
+                local deltaX, deltaY
+                if v.axisLock == "x" then
+                    deltaX, deltaY = 0, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+                elseif v.axisLock == "y" then
+                    deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, 0
+                else
+                    deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+                end
+
+                local xEase = Easing - Actor.xSpeed / Easing * 1.8
+                local yEase = Easing - Actor.ySpeed / Easing * 1.8
+                if xEase < 1 then xEase = 1 end
+                if yEase < 1 then yEase = 1 end
                 v:translate(deltaX / xEase, deltaY / yEase)
             end
             --if zoomDir then
