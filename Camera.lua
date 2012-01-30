@@ -428,8 +428,11 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
 
         for i=0, numTiles + 1 do
             t = newTile( path )
+            if path[3] then
+                t:scale(path[3], path[3])
+            end
             t:setReferencePoint(display.BottomLeftReferencePoint)
-            if i % 2 == 0 then
+            if i % 2 == 1 then
                 t.xScale = t.xScale * -1
                 t:setReferencePoint(display.BottomRightReferencePoint)
             end
@@ -446,7 +449,7 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
             t = newTile( path )
             t:setReferencePoint(display.CenterLeftReferencePoint)
             t.x, t.y = t.x + t.contentWidth, t.contentHeight*0.5+i*t.contentHeight + spacer * i
-            if i % 2 == 0 then
+            if i % 2 == 1 then
                 t.yScale = t.yScale * -1
                 t:translate(0,t.contentHeight)
             end
