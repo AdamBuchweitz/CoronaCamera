@@ -5,6 +5,7 @@ local Running = false
 
 local centerX, centerY = display.contentCenterX, display.contentCenterY
 local screenX, screenY = display.screenOriginX, display.screenOriginY
+local trackX, trackY = centerX, centerY
 
 -- Actor to track
 local Actor
@@ -56,21 +57,21 @@ local setPositions = function( axis, buffer, speed )
 
             if Camera.panning then
                 if v.axisLock == "x" then
-                    v.y = ( centerY / v.yScale - Actor.y ) * v.depth
+                    v.y = ( trackY / v.yScale - Actor.y ) * v.depth
                 elseif v.axisLock == "y" then
-                    v.x = ( centerX / v.xScale - Actor.x ) * v.depth
+                    v.x = ( trackX / v.xScale - Actor.x ) * v.depth
                 else
-                    v.x, v.y = ( centerX / v.xScale - Actor.x ) * v.depth, ( centerY / v.yScale - Actor.y ) * v.depth
+                    v.x, v.y = ( trackX / v.xScale - Actor.x ) * v.depth, ( trackY / v.yScale - Actor.y ) * v.depth
                 end
             else
 
                 local deltaX, deltaY
                 if v.axisLock == "x" then
-                    deltaX, deltaY = 0, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+                    deltaX, deltaY = 0, ( trackY / v.yScale - Actor.y ) * v.depth - v.y
                 elseif v.axisLock == "y" then
-                    deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, 0
+                    deltaX, deltaY = ( trackX / v.xScale - Actor.x ) * v.depth - v.x, 0
                 else
-                    deltaX, deltaY = ( centerX / v.xScale - Actor.x ) * v.depth - v.x, ( centerY / v.yScale - Actor.y ) * v.depth - v.y
+                    deltaX, deltaY = ( trackX / v.xScale - Actor.x ) * v.depth - v.x, ( trackY / v.yScale - Actor.y ) * v.depth - v.y
                 end
 
                 local xEase = Easing - Actor.xSpeed / Easing * 1.8
@@ -97,7 +98,7 @@ local setPositions = function( axis, buffer, speed )
         for i,v in ipairs(Stages) do
             local deltaX
             if buffer then
-                deltaX = ( centerX - Actor.x )
+                deltaX = ( trackX - Actor.x )
                 if buffer == "left" then
                     --v.x = v.x + deltaX
                     v.x = v.x + ( screen.X - v.x ) / Easing
@@ -106,9 +107,9 @@ local setPositions = function( axis, buffer, speed )
                 end
             else
                 if v.axisLock == "x" then
-                    deltaX = ( centerX - Actor.x ) - v.x -- keep the stage on the same horizontal plane
+                    deltaX = ( trackX - Actor.x ) - v.x -- keep the stage on the same horizontal plane
                 else
-                    deltaX = ( centerX - Actor.x ) * v.depth - v.x
+                    deltaX = ( trackX - Actor.x ) * v.depth - v.x
                 end
                 v.x = v.x + deltaX / Easing * ((speed or 10) / 10)
             end
@@ -118,15 +119,15 @@ local setPositions = function( axis, buffer, speed )
         for i,v in ipairs(Stages) do
             local deltaX
             if v.axisLock == "x" then
-                deltaX = ( centerX - Actor.x ) - v.x
+                deltaX = ( trackX - Actor.x ) - v.x
             else
-                deltaX = ( centerX - Actor.x ) * v.depth - v.x
+                deltaX = ( trackX - Actor.x ) * v.depth - v.x
             end
             v.x = v.x + deltaX / Easing
             if v.axisLock == "y" then
-                v.y = ( centerY - Actor.y ) -- keep the stage on the same horizontal plane
+                v.y = ( trackY - Actor.y ) -- keep the stage on the same horizontal plane
             else
-                v.y = ( centerY - Actor.y ) * v.depth
+                v.y = ( trackY - Actor.y ) * v.depth
             end
         end
     end
@@ -310,10 +311,10 @@ end
 
 Camera.setCameraBounds = function( left, top, right, bottom)
     cameraBounds = {}
-    cameraBounds.left = left + centerX
-    cameraBounds.top = top + centerY
-    cameraBounds.right = right - centerX
-    cameraBounds.bottom = bottom - centerY
+    cameraBounds.left = left + trackX
+    cameraBounds.top = top + trackY
+    cameraBounds.right = right - trackX
+    cameraBounds.bottom = bottom - trackY
 end
 
 Camera.setMotionEase = function( num )
@@ -322,6 +323,10 @@ Camera.setMotionEase = function( num )
     else
         error("Expecting a number, recieved a "..type(num))
     end
+end
+
+Camera.setTrackingPoint = function( x, y )
+    trackX, trackY = x or trackX, y or trackY
 end
 
 local panningActor, panTransition, panTimer
@@ -338,7 +343,7 @@ local getPanningActor = function()
     if Actor then
         panningActor.x, panningActor.y = Actor.x, Actor.y
     else
-        panningActor.x, panningActor.y = centerX - Stage.x, centerY - Stage.y
+        panningActor.x, panningActor.y = trackX - Stage.x, trackY - Stage.y
     end
     return panningActor
 end
@@ -346,7 +351,7 @@ end
 onTouch = function(e)
     if e.phase == "began" or not xOrigin then
         local a = getPanningActor()
-        a.x, a.y = Stage:contentToLocal(e.x + (centerX - e.x), e.y + (centerY - e.y))
+        a.x, a.y = Stage:contentToLocal(e.x + (trackX - e.x), e.y + (trackY - e.y))
 
         xOrigin, yOrigin = a.x, a.y
 
