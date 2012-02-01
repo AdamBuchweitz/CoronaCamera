@@ -199,7 +199,7 @@ Camera.enterFrame = function( event )
                 --firstChild.x = lastChild.x + lastChild.contentWidth
                 firstChild:translate(hTiles[i].totalWidth, 0)
                 tInsert(childArr, tRemove(childArr, 1))
-            elseif lx > screenRight + hTiles[i].totalWidth * 1.5 then
+            elseif lx - firstChild.contentWidth > screenRight then
 
                 -- set the tile and the first childs x position and subtract a width
                 --lastChild.x = firstChild.x - lastChild.contentWidth
