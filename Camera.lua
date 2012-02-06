@@ -441,13 +441,17 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
 
         for i=0, numTiles + 1 do
             t = newTile( path )
-            if path[3] then
-                t:scale(path[3], path[3])
-            end
             t:setReferencePoint(display.BottomLeftReferencePoint)
+            if t.contentWidth ~= w then
+                s = w / t.width
+                t.xScale, t.yScale = s, s
+            end
             if i % 2 == 1 then
                 t.xScale = t.xScale * -1
                 t:setReferencePoint(display.BottomRightReferencePoint)
+            end
+            if path[3] then
+                t:scale(path[3], path[3])
             end
             t.x = w * i + spacer * i
             tiler:insert(t)
