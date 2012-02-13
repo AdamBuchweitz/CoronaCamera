@@ -482,9 +482,24 @@ Camera.tile = function(path, w, h, depth, lock, axis, spacer)
 
     tiler.position = function( x, y )
         tiler:translate(x,y)
+        tiler.xInitial, tiler.yInitial = x, y
     end
 
     return tiler
+end
+
+Camera.resetTiles = function()
+
+    for i=1, #hTiles do
+        hTiles[i].x, hTiles[i].y = screenLeft, screenBottom
+        hTiles[i]:translate(hTiles[i].xInitial, hTiles[i].yInitial)
+    end
+
+    for i=1, #vTiles do
+        vTiles[i].x, vTiles[i].y = screenLeft, screenBottom
+        vTiles[i]:translate(vTiles[i].xInitial or 0, vTiles[i].yInitial or 0)
+    end
+
 end
 
 Camera.init = function( directorGroup )
