@@ -176,67 +176,59 @@ Camera.enterFrame = function( event )
         end
     end
 
-    if #hTiles > 0 then
+    -- cycle through every tiler
+    for i=1, #hTiles do
 
-        -- cycle through every tilerr
-        for i=1, #hTiles do
+        local childArr = hTiles[i].children
 
-            local childArr = hTiles[i].children
+        -- how many children are there?
+        local numChildren = #childArr
 
-            -- how many children are there?
-            local numChildren = #childArr
+        -- this is the last tiler in the group
+        local lastChild = childArr[numChildren]
+        -- this is the first tiler in the group
+        local firstChild = childArr[1]
 
-            -- this is the last tiler in the group
-            local lastChild = childArr[numChildren]
-            -- this is the first tiler in the group
-            local firstChild = childArr[1]
+        local fx, fy = firstChild:localToContent( 0, 0 )
+        local lx, ly = lastChild:localToContent( 0, 0 )
+        if fx + firstChild.contentWidth < screenLeft then
 
-            local fx, fy = firstChild:localToContent( 0, 0 )
-            local lx, ly = lastChild:localToContent( 0, 0 )
-            if fx + firstChild.contentWidth < screenLeft then
+            -- set the tile at the last childs x position and add a width
+            firstChild:translate(hTiles[i].totalWidth, 0)
+            tInsert(childArr, tRemove(childArr, 1))
+        elseif lx - firstChild.contentWidth > screenRight then
 
-                -- set the tile at the last childs x position and add a width
-                --firstChild.x = lastChild.x + lastChild.contentWidth
-                firstChild:translate(hTiles[i].totalWidth, 0)
-                tInsert(childArr, tRemove(childArr, 1))
-            elseif lx - firstChild.contentWidth > screenRight then
-
-                -- set the tile and the first childs x position and subtract a width
-                --lastChild.x = firstChild.x - lastChild.contentWidth
-                lastChild:translate(-hTiles[i].totalWidth, 0)
-                tInsert(childArr, 1, tRemove(childArr))
-            end
+            -- set the tile and the first childs x position and subtract a width
+            lastChild:translate(-hTiles[i].totalWidth, 0)
+            tInsert(childArr, 1, tRemove(childArr))
         end
     end
 
-    if #vTiles > 0 then
+    -- cycle through every tiler
+    for i=1, #vTiles do
 
-        -- cycle through every tilerr
-        for i=1, #vTiles do
+        local childArr = vTiles[i].children
 
-            local childArr = vTiles[i].children
+        -- how many children are there?
+        local numChildren = #childArr
 
-            -- how many children are there?
-            local numChildren = #childArr
+        -- this is the last tiler in the group
+        local lastChild = childArr[numChildren]
+        -- this is the first tiler in the group
+        local firstChild = childArr[1]
 
-            -- this is the last tiler in the group
-            local lastChild = childArr[numChildren]
-            -- this is the first tiler in the group
-            local firstChild = childArr[1]
+        local fx, fy = firstChild:localToContent( 0, 0 )
+        local lx, ly = lastChild:localToContent( 0, 0 )
+        if fy < 0 - firstChild.contentHeight then
 
-            local fx, fy = firstChild:localToContent( 0, 0 )
-            local lx, ly = lastChild:localToContent( 0, 0 )
-            if fy < 0 - firstChild.contentHeight then
+            -- set the tile at the last childs x position and add a width
+            firstChild.y = lastChild.y + lastChild.contentHeight
+            tInsert(childArr, tRemove(childArr, 1))
+        elseif ly > screenHeight + firstChild.contentHeight then
 
-                -- set the tile at the last childs x position and add a width
-                firstChild.y = lastChild.y + lastChild.contentHeight
-                tInsert(childArr, tRemove(childArr, 1))
-            elseif ly > screenHeight + firstChild.contentHeight then
-
-                -- set the tile and the first childs x position and subtract a width
-                lastChild.y = firstChild.y - lastChild.contentHeight
-                tInsert(childArr, 1, tRemove(childArr))
-            end
+            -- set the tile and the first childs x position and subtract a width
+            lastChild.y = firstChild.y - lastChild.contentHeight
+            tInsert(childArr, 1, tRemove(childArr))
         end
     end
 end
@@ -490,14 +482,24 @@ end
 
 Camera.resetTiles = function()
 
+    local kids, amt = nil, nil
+
     for i=1, #hTiles do
-        hTiles[i].x, hTiles[i].y = screenLeft, screenBottom
-        hTiles[i]:translate(hTiles[i].xInitial, hTiles[i].yInitial)
+
+        kids = hTiles[i].children
+        amt = kids[1].x
+        for j=1, #kids do
+            kids[j]:translate(-amt, 0)
+        end
     end
 
     for i=1, #vTiles do
-        vTiles[i].x, vTiles[i].y = screenLeft, screenBottom
-        vTiles[i]:translate(vTiles[i].xInitial or 0, vTiles[i].yInitial or 0)
+
+        kids = vTiles[i].children
+        amt = kids[1].y
+        for j=1, #kids do
+            kids[j]:translate(0,-amt)
+        end
     end
 
 end
