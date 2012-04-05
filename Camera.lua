@@ -34,15 +34,17 @@ local Easing = 5
 
 local tInsert, tRemove = table.insert, table.remove
 local abs    = math.abs
-local flr    = math.floor
 local ceil   = math.ceil
-local tonum  = tonumber
+local sqrt   = math.sqrt
 local ipairs = ipairs
 local xBuffer, yBuffer = false, false
-local cullCount, cull = 0
 local hTiles, vTiles = {}, {}
 
 Camera.zoomLevel = 1
+
+local distance = function(x1, y1, x2, y2 )
+    return ceil(sqrt( ((y1 - y2) * (y1 - y2)) + ((x1 - x2) * (x1 - x2))))
+end
 
 local zoomDir
 local setPositions = function( axis, buffer, speed )
@@ -74,11 +76,17 @@ local setPositions = function( axis, buffer, speed )
                     deltaX, deltaY = ( trackX / v.xScale - Actor.x ) * v.depth - v.x, ( trackY / v.yScale - Actor.y ) * v.depth - v.y
                 end
 
-                local xEase = Easing - Actor.xSpeed / Easing * 1.8
-                local yEase = Easing - Actor.ySpeed / Easing * 1.8
-                if xEase < 1 then xEase = 1 end
-                if yEase < 1 then yEase = 1 end
-                v:translate(deltaX / xEase, deltaY / yEase)
+                if Easing > 1 then
+                    local _x, _y = Actor:localToContent(0,0)
+                    local dis = ( distance( _x, _y, centerX, centerY ) )
+                    local xEase = ( Easing - Actor.xSpeed / Easing * 1.8 ) / ( dis * 0.01 )
+                    local yEase = ( Easing - Actor.ySpeed / Easing * 1.8 ) / ( dis * 0.01 )
+                    if xEase < 1 then xEase = 1 end
+                    if yEase < 1 then yEase = 1 end
+                    v:translate(deltaX / xEase, deltaY / yEase)
+                else
+                    v:translate(deltaX, deltaY)
+                end
             end
             --if zoomDir then
                 --if zoomDir == "out" then
@@ -231,21 +239,6 @@ Camera.enterFrame = function( event )
             tInsert(childArr, 1, tRemove(childArr))
         end
     end
-end
-
-cull = function()
-    local a, o = Actor
-    for i=1, Stage.numChildren do
-        o = Stage[i]
-        if o.y < a.y - screenHeight or o.y > a.y + screenHeight then
-            o.isVisible = false
-        else o.isVisible = true end
-        if o.x < a.x - screenWidth or o.x > a.x + screenWidth then
-            o.isVisible = false
-        else o.isVisible = true end
-    end
-    if panningActor then panningActor.isVisible = false end
-    screen.isVisible = false
 end
 
 Camera.track = function( obj )
